@@ -1,0 +1,14 @@
+# Build artifacts (MSVC)
+*.obj
+*.exe
+*.pdb
+*.ilk
+*.exp
+*.lib
+
+# Local test recordings
+*.wav
+*.mp3
+
+# Personal scratch / prompt notes
+AI.txt
