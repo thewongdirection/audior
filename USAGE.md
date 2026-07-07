@@ -118,6 +118,10 @@ can clip its peaks — increase gradually and check the result.
   - `<name>_mic.<ext>` — microphone
   - `<name>_system.<ext>` — system audio
 
+  Both files span the **full** recording and stay aligned: while the render
+  device is idle (nothing playing) the system stream is padded with silence, so
+  the two tracks line up and neither file ends up empty.
+
 If you specify `--include-output` **without** `--merge` or `--separate`, audior
 asks interactively:
 

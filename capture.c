@@ -34,10 +34,40 @@
 /* Capture worker                                                      */
 /* ------------------------------------------------------------------ */
 
+/* Pad a loopback stream with silence up to the wall-clock frame count, so it
+ * stays continuous and aligned with the microphone while nothing is playing.
+ * Only called for loopback streams, and only when the device delivered no data
+ * this cycle (a genuine idle gap - so this never disturbs active playback). */
+static void InjectLoopbackSilence(CaptureStream *cs)
+{
+    LARGE_INTEGER now;
+    UINT64        expected, deficit;
+
+    if (cs->qpcFreq.QuadPart == 0)
+        return;
+
+    QueryPerformanceCounter(&now);
+    expected = (UINT64)((double)(now.QuadPart - cs->startQpc.QuadPart) /
+                        (double)cs->qpcFreq.QuadPart * (double)CANON_SAMPLE_RATE);
+    if (cs->producedFrames >= expected)
+        return;
+
+    deficit = expected - cs->producedFrames;
+    memset(cs->scratch, 0, cs->scratchFrames * CANON_BYTES_PER_FRAME);
+    while (deficit > 0) {
+        UINT64 chunk = deficit < cs->scratchFrames ? deficit : cs->scratchFrames;
+        RingBuffer_Write(cs->ring, (const BYTE *)cs->scratch,
+                         (size_t)chunk * CANON_BYTES_PER_FRAME);
+        cs->producedFrames += chunk;
+        deficit            -= chunk;
+    }
+}
+
 /* Move every currently available packet from the device into the ring. */
 static void DrainDevice(CaptureStream *cs)
 {
     UINT32 packetFrames = 0;
+    BOOL   gotData      = FALSE;
 
     while (SUCCEEDED(IAudioCaptureClient_GetNextPacketSize(cs->capture, &packetFrames)) &&
            packetFrames > 0) {
@@ -55,6 +85,7 @@ static void DrainDevice(CaptureStream *cs)
                 IAudioCaptureClient_ReleaseBuffer(cs->capture, frames);
             break;
         }
+        gotData = TRUE;
 
         /* WASAPI may hand back a "silent" packet whose data pointer is not
          * meaningful; the converter emits zeros for it rather than reading. */
@@ -76,10 +107,15 @@ static void DrainDevice(CaptureStream *cs)
 
             RingBuffer_Write(cs->ring, (const BYTE *)cs->scratch,
                              outFrames * CANON_BYTES_PER_FRAME);
+            cs->producedFrames += outFrames;
         }
 
         IAudioCaptureClient_ReleaseBuffer(cs->capture, frames);
     }
+
+    /* Idle loopback endpoint delivers nothing - fill the gap with silence. */
+    if (cs->loopback && !gotData)
+        InjectLoopbackSilence(cs);
 }
 
 static DWORD WINAPI CaptureThread(LPVOID param)
@@ -153,6 +189,11 @@ HRESULT Capture_Start(CaptureStream *cs)
     HRESULT hr = IAudioClient_Start(cs->client);
     if (FAILED(hr))
         return hr;
+
+    /* Baseline for loopback silence injection: frame 0 == now. */
+    QueryPerformanceFrequency(&cs->qpcFreq);
+    QueryPerformanceCounter(&cs->startQpc);
+    cs->producedFrames = 0;
 
     cs->thread = CreateThread(NULL, 0, CaptureThread, cs, 0, NULL);
     if (!cs->thread)

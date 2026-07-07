@@ -4,6 +4,14 @@
  * Each CaptureStream runs its own thread that polls the WASAPI capture
  * client, converts incoming audio to the canonical PCM format, and writes
  * it into a ring buffer.  A shared stop event ends every stream together.
+ *
+ * Loopback silence injection: a render endpoint delivers NO packets while it
+ * is idle (nothing is playing), whereas a microphone always emits (silent)
+ * packets.  Left alone, that makes the loopback stream shorter than the mic
+ * stream - and in --separate mode an all-silent loopback would yield an empty
+ * (0-byte, invalid) system file.  So a loopback stream tracks how many frames
+ * it *should* have produced by now (wall clock) and pads the gap with silence,
+ * keeping it continuous and aligned with the microphone timeline.
  */
 #ifndef AUDIOR_CAPTURE_H
 #define AUDIOR_CAPTURE_H
@@ -24,6 +32,10 @@ typedef struct {
     size_t               scratchFrames;
     BOOL                 loopback;
     float                gain;          /* linear amplitude multiplier        */
+    /* Silence-injection bookkeeping (loopback only). */
+    LARGE_INTEGER        startQpc;      /* perf counter at capture start      */
+    LARGE_INTEGER        qpcFreq;       /* perf counter ticks per second      */
+    UINT64               producedFrames;/* canonical frames pushed to ring    */
     HRESULT              threadHr;      /* result reported by the thread      */
 } CaptureStream;
 

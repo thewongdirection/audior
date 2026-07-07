@@ -438,17 +438,22 @@ namespace Audior
     }
 
     // ---------------- WASAPI capture stream ----------------
+    // See the C capture.h for the loopback silence-injection rationale: an idle
+    // render endpoint delivers no packets, so a loopback stream pads itself with
+    // silence up to the wall-clock frame count to stay aligned with the mic (and
+    // to avoid an empty/invalid system file in --separate mode).
     class CaptureStream
     {
         IAudioClient client; IAudioCaptureClient capture; IntPtr mixFmt;
         int srcChannels, srcContainer, srcBlockAlign; bool srcIsFloat; uint srcRate;
-        double step, pos; float lastL, lastR; float gain;
+        double step, pos; float lastL, lastR; float gain; bool loopback;
         RingBuffer ring; ManualResetEvent stop; Thread thread;
         byte[] copyBuf = new byte[0]; byte[] outBuf = new byte[0];
+        System.Diagnostics.Stopwatch clock; long producedFrames;   // silence-injection bookkeeping
 
         public void Init(IMMDevice dev, bool loopback, float gain, ManualResetEvent stop, RingBuffer ring)
         {
-            this.gain = gain; this.stop = stop; this.ring = ring;
+            this.gain = gain; this.stop = stop; this.ring = ring; this.loopback = loopback;
             object o; Guid iac = Native.IID_IAudioClient;
             Check(dev.Activate(ref iac, Native.CLSCTX_ALL, IntPtr.Zero, out o), "Activate");
             client = (IAudioClient)o;
@@ -476,6 +481,9 @@ namespace Audior
         public void Start()
         {
             Check(client.Start(), "Start");
+            // Baseline for loopback silence injection: frame 0 == now.
+            clock = System.Diagnostics.Stopwatch.StartNew();
+            producedFrames = 0;
             thread = new Thread(new ThreadStart(Run));
             thread.IsBackground = true;
             thread.Start();
@@ -514,15 +522,39 @@ namespace Audior
         void Drain()
         {
             uint packet;
+            bool gotData = false;
             while (capture.GetNextPacketSize(out packet) == 0 && packet > 0)
             {
                 IntPtr data; uint frames, dwFlags;
                 int hr = capture.GetBuffer(out data, out frames, out dwFlags, IntPtr.Zero, IntPtr.Zero);
                 if (hr < 0) break;
                 if (frames == 0) { capture.ReleaseBuffer(0); break; }
+                gotData = true;
                 bool silent = (dwFlags & Native.AUDCLNT_BUFFERFLAGS_SILENT) != 0;
                 Process(data, (int)frames, silent);
                 capture.ReleaseBuffer(frames);
+            }
+            // Idle loopback endpoint delivers nothing - fill the gap with silence.
+            if (loopback && !gotData) InjectSilence();
+        }
+
+        // Pad the loopback stream with silence up to the wall-clock frame count,
+        // keeping it continuous and aligned with the mic while nothing plays.
+        void InjectSilence()
+        {
+            if (clock == null) return;
+            long expected = (long)(clock.Elapsed.TotalSeconds * Fmt.Rate);
+            if (producedFrames >= expected) return;
+            long deficit = expected - producedFrames;
+            int cap = outBuf.Length / Fmt.Bytes;
+            if (cap <= 0) { outBuf = new byte[Fmt.Rate * Fmt.Bytes / 10]; cap = outBuf.Length / Fmt.Bytes; }
+            Array.Clear(outBuf, 0, outBuf.Length);
+            while (deficit > 0)
+            {
+                int chunk = (int)Math.Min(deficit, cap);
+                ring.Write(outBuf, chunk * Fmt.Bytes);
+                producedFrames += chunk;
+                deficit        -= chunk;
             }
         }
 
@@ -564,7 +596,7 @@ namespace Audior
             lastL = cl; lastR = cr;   // carry for the next packet
             pos -= frames;            // rebase position into next-packet coords
 
-            if (outCount > 0) ring.Write(outBuf, outCount * 4);
+            if (outCount > 0) { ring.Write(outBuf, outCount * 4); producedFrames += outCount; }
         }
 
         void Fetch(int idx, bool silent, out float l, out float r)
