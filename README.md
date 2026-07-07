@@ -8,6 +8,10 @@ uses **WASAPI** for audio capture and **Media Foundation** for MP3 encoding.
 It has no third-party dependencies; only the Windows SDK and the C runtime are
 required.
 
+**Purpose:** this project demonstrates the use of WASAPI and other libraries
+available by default in Windows for the purpose of audio stream interaction and
+audio encoding.
+
 It ships in **two behaviourally-identical editions**: this C reference build
 (`audior.exe`) and a PowerShell port in [`audior_ps/`](audior_ps/) whose audio
 engine is embedded C# compiled at runtime — no build step, same features.
