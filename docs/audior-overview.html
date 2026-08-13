@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>audior — Overview</title>
+<style>
+  @page { size: A4 portrait; margin: 0; }
+
+  :root {
+    --ink:     #0F172A;
+    --body:    #334155;
+    --muted:   #64748B;
+    --line:    #E2E8F0;
+    --wash:    #F8FAFC;
+    --accent:  #0D9488;
+    --accent2: #0F766E;
+    --amber:   #B45309;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 210mm; height: 297mm;
+    font-family: "Liberation Sans", Arial, Helvetica, sans-serif;
+    color: var(--body);
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page {
+    width: 210mm; height: 297mm;
+    padding: 0 11mm 6mm 11mm;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  code, .mono { font-family: "Liberation Mono", "DejaVu Sans Mono", monospace; }
+
+  /* ---------- header ---------- */
+  header {
+    background: var(--ink);
+    color: #fff;
+    margin: 0 -11mm 4.6mm -11mm;
+    padding: 6mm 11mm 5mm 11mm;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    border-bottom: 1.2mm solid var(--accent);
+  }
+  .wordmark { font-size: 27pt; font-weight: 700; letter-spacing: -0.6pt; line-height: 1; }
+  .wordmark .dot { color: var(--accent); }
+  .tagline { font-size: 9pt; color: #CBD5E1; margin-top: 2mm; letter-spacing: 0.1pt; }
+  .subline { font-size: 7.6pt; color: #94A3B8; margin-top: 1.4mm; }
+
+  .chips { display: flex; flex-direction: column; gap: 1.6mm; align-items: flex-end; }
+  .chip {
+    font-size: 7pt; font-weight: 700; letter-spacing: 0.5pt; text-transform: uppercase;
+    border: 0.25mm solid #475569; color: #E2E8F0;
+    border-radius: 1mm; padding: 1.1mm 2.4mm; white-space: nowrap;
+  }
+  .chip.solid { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ---------- section titles ---------- */
+  .sec {
+    display: flex; align-items: center; gap: 2.5mm;
+    font-size: 8pt; font-weight: 700; letter-spacing: 1.4pt; text-transform: uppercase;
+    color: var(--ink); margin-bottom: 2.6mm;
+  }
+  .sec::after { content: ""; flex: 1; height: 0.25mm; background: var(--line); }
+  .sec .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 4.6mm; height: 4.6mm; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 6.6pt; letter-spacing: 0;
+  }
+
+  /* ---------- capability cards ---------- */
+  .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.6mm; }
+  .card {
+    border: 0.25mm solid var(--line); border-radius: 1.4mm;
+    background: var(--wash);
+    padding: 2.8mm 2.8mm 2.9mm 2.8mm;
+  }
+  .card .ico {
+    width: 5.8mm; height: 5.8mm; border-radius: 1.1mm;
+    background: #fff; border: 0.25mm solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1.9mm;
+  }
+  .card .ico svg { width: 3.8mm; height: 3.8mm; stroke: var(--accent); stroke-width: 2; fill: none;
+                   stroke-linecap: round; stroke-linejoin: round; }
+  .card h3 { font-size: 8pt; color: var(--ink); line-height: 1.2; margin-bottom: 1.2mm; }
+  .card p  { font-size: 6.6pt; line-height: 1.38; color: var(--muted); }
+  .card p code { font-size: 6.4pt; color: var(--accent2); }
+
+  /* ---------- pipeline ---------- */
+  .pipe {
+    display: flex; align-items: stretch; gap: 0;
+    border: 0.25mm solid var(--line); border-radius: 1.4mm;
+    padding: 3.2mm 3.6mm; background: #fff;
+  }
+  .stage { flex: 1; text-align: center; }
+  .stage .k { font-size: 7.6pt; font-weight: 700; color: var(--ink); }
+  .stage .v { font-size: 6.5pt; color: var(--muted); margin-top: 0.9mm; line-height: 1.35; }
+  .stage .bar { height: 1mm; border-radius: 0.5mm; background: var(--accent); opacity: .18; margin-bottom: 2.2mm; }
+  .stage.hi .bar { opacity: 1; }
+  .arrow {
+    width: 7mm; display: flex; align-items: center; justify-content: center;
+    color: #CBD5E1; font-size: 11pt; padding-top: 3mm;
+  }
+  .pipe-note {
+    font-size: 6.3pt; color: var(--muted); margin-top: 1.6mm; text-align: center;
+  }
+  .pipe-note strong { color: var(--ink); }
+
+  .specbar {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    border: 0.25mm solid var(--line); border-left: 1.2mm solid var(--accent);
+    border-radius: 1.4mm; background: var(--wash);
+    margin-top: 2.4mm; padding: 2.2mm 0;
+  }
+  .specbar .s { padding: 0 3.4mm; }
+  .specbar .s + .s { border-left: 0.2mm solid var(--line); }
+  .specbar .k {
+    display: block; font-size: 5.9pt; letter-spacing: 0.7pt; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 0.8mm;
+  }
+  .specbar .v { display: block; font-size: 8pt; font-weight: 700; color: var(--ink); }
+
+  /* ---------- bottom split ---------- */
+  .split { display: grid; grid-template-columns: 106mm 1fr; gap: 6mm; flex: 1; min-height: 0; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    font-size: 6.4pt; letter-spacing: 0.8pt; text-transform: uppercase; color: var(--muted);
+    text-align: left; padding: 0 0 1.3mm 0; border-bottom: 0.25mm solid var(--line); font-weight: 700;
+  }
+  td { font-size: 7pt; padding: 0.6mm 0; border-bottom: 0.2mm solid #F1F5F9; vertical-align: top; }
+  td.opt { width: 34mm; }
+  td.opt code { font-size: 6.9pt; color: var(--ink); font-weight: 700; }
+  td.arg { width: 20mm; font-size: 6.5pt; color: var(--accent2); }
+  td.dsc { color: var(--muted); font-size: 6.8pt; line-height: 1.3; }
+  tr:last-child td { border-bottom: none; }
+
+  .panel {
+    border: 0.25mm solid var(--line); border-radius: 1.4mm;
+    padding: 3mm 3.2mm; margin-bottom: 3.4mm; background: var(--wash);
+  }
+  .panel:last-child { margin-bottom: 0; }
+  .panel h4 {
+    font-size: 7.4pt; letter-spacing: 0.9pt; text-transform: uppercase; color: var(--ink);
+    margin-bottom: 1.9mm;
+  }
+  .panel h4 .tag {
+    float: right; font-size: 6pt; letter-spacing: 0.4pt; color: #fff; background: var(--accent);
+    border-radius: 0.8mm; padding: 0.5mm 1.6mm; text-transform: uppercase;
+  }
+  .panel h4 .tag.grey { background: #94A3B8; }
+
+  .kv { display: flex; justify-content: space-between; gap: 3mm; font-size: 6.9pt; padding: 0.85mm 0; }
+  .kv + .kv { border-top: 0.2mm solid #EAEFF5; }
+  .kv .k { color: var(--muted); }
+  .kv .v { color: var(--ink); font-weight: 700; text-align: right; }
+
+  ul { list-style: none; }
+  ul li {
+    font-size: 6.75pt; line-height: 1.36; color: var(--body);
+    padding-left: 3.2mm; position: relative; margin-bottom: 1.15mm;
+  }
+  ul li:last-child { margin-bottom: 0; }
+  ul li::before {
+    content: ""; position: absolute; left: 0; top: 1.35mm;
+    width: 1.4mm; height: 1.4mm; border-radius: 50%; background: var(--accent);
+  }
+  ul li.no::before { background: #CBD5E1; }
+  ul li b { color: var(--ink); }
+  ul li code { font-size: 6.5pt; color: var(--accent2); }
+
+  /* ---------- footer ---------- */
+  footer {
+    margin-top: 3mm; padding-top: 2.2mm; border-top: 0.25mm solid var(--line);
+    display: flex; justify-content: space-between; align-items: baseline; gap: 6mm;
+  }
+  footer .lim { font-size: 6.3pt; color: var(--muted); line-height: 1.4; }
+  footer .lim b { color: var(--ink); }
+  footer .brand { font-size: 6.3pt; color: #94A3B8; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div>
+      <div class="wordmark">audior<span class="dot">.</span></div>
+      <div class="tagline">Command-line microphone &amp; system-audio recorder for Windows</div>
+      <div class="subline">Strict C on the Windows SDK — WASAPI capture, Media Foundation MP3 encoding, zero third-party dependencies</div>
+    </div>
+    <div class="chips">
+      <span class="chip solid">Windows 10 &amp; 11</span>
+      <span class="chip">Two editions · C + PowerShell</span>
+      <span class="chip">WAV &amp; MP3 output</span>
+    </div>
+  </header>
+
+  <!-- 1. CAPABILITIES -->
+  <div class="sec"><span class="num">1</span>Core capabilities</div>
+  <div class="cards" style="margin-bottom:4.6mm">
+
+    <div class="card">
+      <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><path d="M12 18v4"/></svg></div>
+      <h3>Microphone recording</h3>
+      <p>Captures any active input endpoint through WASAPI, straight to WAV or MP3.</p>
+    </div>
+
+    <div class="card">
+      <div class="ico"><svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg></div>
+      <h3>System audio capture</h3>
+      <p>WASAPI loopback records whatever the playback device is mixing — <code>--include-output</code>.</p>
+    </div>
+
+    <div class="card">
+      <div class="ico"><svg viewBox="0 0 24 24"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg></div>
+      <h3>Merge or separate</h3>
+      <p>One mixed file at a chosen mic share (default 65/35), or aligned <code>_mic</code> + <code>_system</code> tracks.</p>
+    </div>
+
+    <div class="card">
+      <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 10h6M9 8h6M17 16h6"/></svg></div>
+      <h3>Microphone gain</h3>
+      <p><code>--amplify 0–300</code> boosts the mic only: 0 = unity, 100 = 2×, 300 = 4×.</p>
+    </div>
+
+    <div class="card">
+      <div class="ico"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></div>
+      <h3>Device control</h3>
+      <p>List every capture and playback endpoint; select by ID, list index, or name substring.</p>
+    </div>
+
+    <div class="card">
+      <div class="ico"><svg viewBox="0 0 24 24"><path d="M22 12H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><path d="M6 16h.01M10 16h.01"/></svg></div>
+      <h3>Streams to disk</h3>
+      <p>Ring buffer plus a writer loop keep memory bounded at any recording length.</p>
+    </div>
+
+    <div class="card">
+      <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg></div>
+      <h3>Two ways to stop</h3>
+      <p>Press <code>Enter</code>, or run <code>--stop</code> elsewhere — a named event, crossing windows and editions.</p>
+    </div>
+
+    <div class="card">
+      <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M4 7v10"/><path d="M8 4.5v15"/><path d="M16 4.5v15"/><path d="M20 7v10"/></svg></div>
+      <h3>Live progress</h3>
+      <p>A single in-place status line reports seconds and bytes written on every flush.</p>
+    </div>
+
+  </div>
+
+  <!-- 2. PIPELINE -->
+  <div class="sec"><span class="num">2</span>How a recording flows</div>
+  <div style="margin-bottom:4.6mm">
+    <div class="pipe">
+      <div class="stage hi">
+        <div class="bar"></div>
+        <div class="k">WASAPI capture</div>
+        <div class="v">Microphone thread<br>+ optional loopback thread</div>
+      </div>
+      <div class="arrow">&#9654;</div>
+      <div class="stage">
+        <div class="bar"></div>
+        <div class="k">Normalise</div>
+        <div class="v">Resample &amp; convert to<br>48 kHz / 16-bit / stereo</div>
+      </div>
+      <div class="arrow">&#9654;</div>
+      <div class="stage">
+        <div class="bar"></div>
+        <div class="k">Ring buffer</div>
+        <div class="v">Thread-safe hand-off,<br>fixed memory footprint</div>
+      </div>
+      <div class="arrow">&#9654;</div>
+      <div class="stage">
+        <div class="bar"></div>
+        <div class="k">Writer loop</div>
+        <div class="v">Mixes or splits streams,<br>flushes continuously</div>
+      </div>
+      <div class="arrow">&#9654;</div>
+      <div class="stage hi">
+        <div class="bar"></div>
+        <div class="k">WAV / MP3 file</div>
+        <div class="v">PCM writer, or Media<br>Foundation MP3 encoder</div>
+      </div>
+    </div>
+    <div class="specbar">
+      <div class="s"><span class="k">Sample rate</span><span class="v">48 000 Hz</span></div>
+      <div class="s"><span class="k">Channels</span><span class="v">2 · stereo</span></div>
+      <div class="s"><span class="k">Sample type</span><span class="v">16-bit signed PCM</span></div>
+      <div class="s"><span class="k">MP3 bitrate</span><span class="v">128 kbps</span></div>
+      <div class="s"><span class="k">Default format</span><span class="v">MP3</span></div>
+    </div>
+    <div class="pipe-note">
+      Every device format — mono, other sample rates, float samples — is converted on the fly to this canonical form, which is what lets the two streams mix reliably.
+    </div>
+  </div>
+
+  <!-- 3 + 4 -->
+  <div class="split">
+
+    <div>
+      <div class="sec"><span class="num">3</span>Command reference</div>
+      <table>
+        <thead>
+          <tr><th>Option</th><th>Argument</th><th>What it does</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="opt"><code>-o, --output</code></td><td class="arg">&lt;file&gt;</td><td class="dsc">Output path. Required to record; extension corrected to match the format.</td></tr>
+          <tr><td class="opt"><code>-f, --format</code></td><td class="arg">wav | mp3</td><td class="dsc">Output format. Default <b>mp3</b>.</td></tr>
+          <tr><td class="opt"><code>-i, --include-output</code></td><td class="arg">—</td><td class="dsc">Also capture system audio via WASAPI loopback.</td></tr>
+          <tr><td class="opt"><code>--merge</code></td><td class="arg">[percent]</td><td class="dsc">Mix both sources into one file; percent is the mic's share (default 65).</td></tr>
+          <tr><td class="opt"><code>--separate</code></td><td class="arg">—</td><td class="dsc">Write two aligned files: <code>_mic</code> and <code>_system</code>.</td></tr>
+          <tr><td class="opt"><code>-m, --mic</code></td><td class="arg">&lt;id|index|name&gt;</td><td class="dsc">Microphone to record. Default: system default capture device.</td></tr>
+          <tr><td class="opt"><code>-a, --amplify</code></td><td class="arg">&lt;0-300&gt;</td><td class="dsc">Linear gain on the mic stream. Default 0 (unity).</td></tr>
+          <tr><td class="opt"><code>-d, --output-device</code></td><td class="arg">&lt;id|index|name&gt;</td><td class="dsc">Playback device to capture for loopback. Default: system default.</td></tr>
+          <tr><td class="opt"><code>-l, --list-devices</code></td><td class="arg">—</td><td class="dsc">List all capture and playback devices, then exit.</td></tr>
+          <tr><td class="opt"><code>-s, --stop</code></td><td class="arg">—</td><td class="dsc">Stop a recording started by another instance and finalise its files.</td></tr>
+          <tr><td class="opt"><code>-h, --help</code></td><td class="arg">—</td><td class="dsc">Show help and exit. Exit codes: <b>0</b> success · <b>1</b> error.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="panel" style="margin-top:3mm">
+        <h4>Typical invocations</h4>
+        <div style="font-size:6.6pt; line-height:1.38; color:#334155" class="mono">
+          audior <span style="color:#0F766E">--list-devices</span><br>
+          audior <span style="color:#0F766E">--output</span> meeting.mp3<br>
+          audior <span style="color:#0F766E">--output</span> talk.wav <span style="color:#0F766E">--format</span> wav<br>
+          audior <span style="color:#0F766E">--output</span> session.mp3 <span style="color:#0F766E">-i --merge --amplify</span> 50<br>
+          audior <span style="color:#0F766E">--output</span> call.wav <span style="color:#0F766E">-f</span> wav <span style="color:#0F766E">-i --separate</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec"><span class="num">4</span>Requirements</div>
+
+      <div class="panel">
+        <h4>Supported OS</h4>
+        <ul>
+          <li><b>Windows 10</b> or <b>Windows 11</b> — the only supported platforms.</li>
+          <li>Uses in-box <b>WASAPI</b> and <b>Media Foundation</b>; no runtime beyond the Windows C runtime.</li>
+          <li class="no">MP3 encoding needs Media Foundation, which is absent on <b>“N” editions</b> without the Media Feature Pack.</li>
+          <li class="no">Microphone access must be allowed under Settings → Privacy &amp; Security → Microphone.</li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h4>To build the C edition <span class="tag">audior.exe</span></h4>
+        <ul>
+          <li><b>MSVC <code>cl.exe</code></b> — Visual Studio 2022, any edition.</li>
+          <li><b>Windows SDK 10.0.19041.0</b> or later.</li>
+          <li>Run <code>build.bat</code> from a Developer Command Prompt.</li>
+          <li class="no">Compiled as C (<code>/TC</code>). MinGW, Clang-cl and cross-compilation are not supported.</li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h4>To run the PS edition <span class="tag grey">audior.ps1</span></h4>
+        <ul>
+          <li><b>No build step</b> — the C# audio engine is compiled at run time by <code>Add-Type</code>.</li>
+          <li>Windows PowerShell only; no external modules.</li>
+          <li class="no">If execution policy blocks it: <code>powershell -ExecutionPolicy Bypass -File .\audior.ps1</code></li>
+        </ul>
+      </div>
+
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="lim">
+      <b>Good to know —</b> loopback records the device mix, so it captures silence when nothing is playing · resampling is linear interpolation, suited to speech and general recording · <code>--amplify</code> can clip a loud source · MP3 is fixed at 128 kbps stereo at compile time · one session per process.
+    </div>
+    <div class="brand">audior · README.md · USAGE.md · BUILDING.md</div>
+  </footer>
+
+</div>
+</body>
+</html>
